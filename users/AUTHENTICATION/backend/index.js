@@ -4,6 +4,7 @@ const routes = require('./routes/user');
 const app=express();
 require('dotenv').config();
 require('./config/db');
+app.use(express.json());
 const port=process.env.PORT || 3000;
 
 app.use('/api/v1',routes);

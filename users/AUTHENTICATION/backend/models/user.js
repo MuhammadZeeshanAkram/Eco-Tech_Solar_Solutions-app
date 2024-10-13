@@ -13,6 +13,12 @@ const userSchema=new mongoose.Schema({
         type:String,
         required:true
     },
+    mobile: {
+        type: String,
+        required: true,
+        unique: true,
+        match: /^[0-9]{10,15}$/  // Assuming the mobile number has 10-15 digits
+    },
     date:{
         type:Date,
         default:Date.now
@@ -23,5 +29,5 @@ const userSchema=new mongoose.Schema({
 },{timestamps:true});
 
 
-const User=mongoose.model('User',userSchema);
+const User=mongoose.model('solarUsers',userSchema);
 module.exports=User;
