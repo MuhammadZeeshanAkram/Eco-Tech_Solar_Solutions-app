@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const bcrypt = require('bcrypt');
-
+const randomstring = require("randomstring");
+const nodemailer = require('nodemailer');
 
 const registerUser = async (req, res) => {
     const userModel = new User(req.body);
@@ -43,7 +44,56 @@ const loginUser = async (req, res) => {
     }
 }
 
+const forgotPassword = async (req, res) => {
+    try {
+        const email=req.body.email
+        const user = await User.findOne({ email: req.body.email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        const randomString=randomstring.generate(6);
+        const data=await user.updateOne({email:email},{$set:{token:randomString}});
+        resetPassword(user.name,email,randomString);
+        return res.status(200).json({ message: "Password reset link sent to your email" });
+    } catch (err) {
+        return res.status(500).json({ message: "Internal server error", error: err });
+    }
+}
+
+const sendResetPasswordMail = async (name,email,token) => {
+    try {
+        const transporter=nodemailer.createTransport({
+            host : 'smtp.gmail.com',
+            port : 465,
+            secure : false,
+            requireTLS : true,
+            auth: {
+                user: process.env.EMAIL,
+                pass: process.env.EMAIL_PASSWORD
+            }
+        });
+        const sendMail = ({
+            from: process.env.EMAIL,
+            to: email,
+            subject: 'Password reset',
+            text: `Hi ${name}, \n\nThe password reset link is: ${token}`
+        })
+        transporter.sendMail(sendMail,fucntion(err,info){
+            if(err){
+                console.log(err);
+                return res.status(500).json({ message: "Internal server error", error: err });
+            }
+            else{
+                return res.status(200).json({ message: "Password reset link sent to your email",info.response });
+            }
+            
+        });
+        
+    } catch (err) {
+        return res.status(500).json({ message: "Internal server error", error: err });
+    }
+} 
 
 module.exports = {
-    registerUser,getUsers,loginUser
+    registerUser,getUsers,loginUser,forgotPassword,sendResetPasswordMail,resetPassword
 };
