@@ -1,8 +1,10 @@
 const User = require("../models/user");
 const bcrypt = require('bcrypt');
-const randomstring = require("randomstring");
-const nodemailer = require('nodemailer');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+
 
 // Register user
 const registerUser = async (req, res) => {
@@ -27,120 +29,81 @@ const getUsers = async (req, res) => {
     }
 }
 
-// Login user by email, name, or mobile
+
 const loginUser = async (req, res) => {
     try {
+        const { name, email, mobile, password } = req.body;
+        const { rememberMe } = req.body;
+
         let user;
-        if (req.body.email) {
-            user = await User.findOne({ email: req.body.email });
-        } else if (req.body.name) {
-            user = await User.findOne({ name: req.body.name });
-        } else if (req.body.mobile) {
-            user = await User.findOne({ mobile: req.body.mobile });
+
+        // Find user based on the provided credential
+        if (name) {
+            user = await User.findOne({ name });
+        } else if (email) {
+            user = await User.findOne({ email });
+        } else if (mobile) {
+            user = await User.findOne({ mobile });
         }
 
-        // Check if user exists and password matches
+        // Check if user exists
         if (!user) {
-            return res.status(401).json({ message: "User not found" });
+            return res.status(401).json({ message: "Invalid credentials" });
         }
-        const isMatch = await bcrypt.compare(req.body.password, user.password);
+
+        // Verify password
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        user.password = undefined; // Remove password from response
-        return res.status(200).json({ message: "Logged in successfully", data: user });
-    } catch (err) {
-        return res.status(500).json({ message: "Internal server error", error: err });
-    }
-}
-
-
-const forgotPassword = async (req, res) => {
-    try {
-        const email = req.body.email;
-        console.log('Request received for email:', email);
-
-        const user = await User.findOne({ email: email });
-        if (!user) {
-            console.log('User not found:', email);
-            return res.status(404).json({ message: "If this email is registered, you will receive a password reset link shortly." });
-        }
-
-        const randomString = randomstring.generate(20);
-        user.token = randomString;
-        await user.save();
-
-        await sendResetPasswordMail(user.name, email, randomString);
-        return res.status(200).json({ message: "Password reset link sent to your email." });
-    } catch (err) {
-        console.error('Error in forgotPassword:', err);
-        return res.status(500).json({ message: "An error occurred while processing your request." });
-    }
-}
-
-const sendResetPasswordMail = async (name, email, token) => {
-    try {
-        console.log('EMAIL:', process.env.EMAIL);
-console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD);
-
-        console.log('Setting up transporter...');
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false, // true for 465, false for other ports
-            auth: {
-                user: process.env.EMAIL,
-                pass: process.env.EMAIL_PASSWORD
-            }
-        });
-
-        const mailOptions = {
-            from: '"IDS SOLAR APP" <' + process.env.EMAIL + '>',
-            to: email,
-            subject: 'Reset Your Password',
-            html: `<p>Hello ${name},</p>
-                   <p>Please use the following link to reset your password:</p>
-                   <a href="http://localhost:3000/api/v1/forgot-password?token=${token}">Reset Password</a>
-                   <p>This link will expire in 1 hour.</p>`
+        // Generate JWT tokens
+        const tokenObject = {
+            _id: user._id,
+            email: user.email,
+            name: user.name,
         };
 
-        console.log('Sending email to:', email);
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent: ' + info.response);
-    } catch (error) {
-        console.error('Error in sending email:', error);
-        throw new Error('Failed to send reset password email');
+        // Short-lived access token (e.g., 15 minutes)
+        const accessToken = jwt.sign(tokenObject, process.env.JWT_SECRET, { expiresIn: '15m' });
+
+        // Long-lived refresh token (7 days or 30 days if "Remember Me" is checked)
+        const refreshToken = jwt.sign(tokenObject, process.env.REFRESH_SECRET, { expiresIn: rememberMe ? '30d' : '7d' });
+
+        // Store the refresh token in a secure, HttpOnly cookie
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000,
+        });
+
+        // Remove sensitive data from the user object before sending the response
+        const userResponse = {
+            _id: user._id,
+            email: user.email,
+            name: user.name,
+            mobile: user.mobile,
+            // Add other non-sensitive fields as needed
+        };
+
+        // Return response with access token and user data
+        return res.status(200).json({
+            message: "Logged in successfully",
+            accessToken,
+            user: userResponse
+        });
+
+    } catch (err) {
+        console.error('Login error:', err);
+        return res.status(500).json({ message: "An error occurred during login. Please try again." });
     }
 };
-
-
-
-// Reset password
-const resetPassword = async (req, res) => {
-    try {
-        const { email, token, newPassword } = req.body;
-        const user = await User.findOne({ email: email });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        if (user.token !== token) {
-            return res.status(401).json({ message: "Invalid token" });
-        }
-        user.password = await bcrypt.hash(newPassword, 10); // Hash new password
-        user.token = undefined; // Clear token after use
-        const response = await user.save();
-        return res.status(200).json({ message: "Password reset successfully", data: response });
-    } catch (err) {
-        return res.status(500).json({ message: "Internal server error", error: err });
-    }
-}
 
 module.exports = {
     registerUser,
     getUsers,
     loginUser,
-    forgotPassword,
-    sendResetPasswordMail,
-    resetPassword
+    
+    
 };

@@ -15,10 +15,6 @@ routes.post('/login-with-name', userLoginValidateWithName, loginUser);
 routes.post('/login-with-email', userLoginValidateWithEmail, loginUser);
 routes.post('/login-with-mobile', userLoginValidationWithMobile, loginUser);
 
-// Forgot password - only generate and send reset token
-routes.post('/forgot-password', forgotPassword);
 
-// Reset password - separate route after the token is received
-routes.post('/reset-password', resetPassword);
 
 module.exports = routes;
