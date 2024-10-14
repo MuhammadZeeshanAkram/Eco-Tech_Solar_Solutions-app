@@ -6,6 +6,8 @@ const userRegisterValidate=(req,res,next)=>{
         email:Joi.string().email().required(),
         mobile: Joi.string().pattern(/^[0-9]{10,15}$/),
         password:Joi.string().min(4).alphanum().required(),
+        confirmPassword: Joi.any().equal(Joi.ref('password')).required()
+            .messages({ 'any.only': 'Passwords do not match' })
     });
     const {error,value}=schema.validate(req.body);
     if(error){
