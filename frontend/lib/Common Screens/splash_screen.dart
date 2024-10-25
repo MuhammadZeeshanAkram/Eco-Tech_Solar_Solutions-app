@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/Users/Modules/AUTHENTICATION/screens/login_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 import 'dart:ui';
+import 'package:frontend/constants.dart'; // Import the constants.dart file
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -27,13 +26,11 @@ class _SplashScreenState extends State<SplashScreen> {
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
-    } 
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    TextTheme textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -41,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> {
             // Background Image
             Positioned.fill(
               child: Image.asset(
-                'assets/background image/backgroundImage.png',
+                'assets/background_image/backgroundImage.png',
                 fit: BoxFit.cover,
                 height: 1.sh,
                 width: 1.sw,
@@ -60,12 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ],
                     begin: Alignment.bottomCenter,
                     end: Alignment.center,
-                    stops: const [
-                      0.0,
-                      0.3,
-                      0.6,
-                      0.4,
-                    ],
+                    stops: const [0.0, 0.3, 0.6, 0.4],
                   ),
                 ),
               ),
@@ -80,12 +72,13 @@ class _SplashScreenState extends State<SplashScreen> {
                   decoration: BoxDecoration(
                     boxShadow: [
                       BoxShadow(
-                        color: const Color.fromARGB(24, 0, 0, 0).withOpacity(0.2),
+                        color:
+                            const Color.fromARGB(24, 0, 0, 0).withOpacity(0.2),
                       ),
                     ],
                   ),
                   child: Image.asset(
-                    'assets/company logo/logo.png',
+                    'assets/company_logo/logo.png',
                     height: 200.h,
                     width: 100.w,
                   ),
@@ -102,17 +95,14 @@ class _SplashScreenState extends State<SplashScreen> {
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
                   child: Text(
                     'Solar Energy Solutions.',
-                    style: textTheme.headlineSmall?.copyWith(
-                        color: const Color.fromARGB(255, 15, 15, 15),
-                        fontSize: 18.sp),
+                    style: appTextTheme.headlineSmall?.copyWith(
+                      color: const Color.fromARGB(255, 15, 15, 15),
+                      fontSize: 18.sp,
+                    ),
                     textAlign: TextAlign.center,
-                    
                   ),
-                  
                 ),
-                
               ),
-              
             ),
             SizedBox(height: 410.h),
             // Centered Text with Manual Positioning
@@ -126,27 +116,27 @@ class _SplashScreenState extends State<SplashScreen> {
                     child: Text.rich(
                       TextSpan(
                         text: 'Powering ',
-                        style: textTheme.headlineMedium?.copyWith(
+                        style: appTextTheme.headlineMedium?.copyWith(
                           fontSize: 30.sp,
+                          color: const Color.fromARGB(255, 247, 245, 245),
                         ),
                         children: <TextSpan>[
                           TextSpan(
                             text: 'Tomorrow',
-                            style: textTheme.headlineMedium!.copyWith(
+                            style: appTextTheme.headlineMedium!.copyWith(
                               fontWeight: FontWeight.bold,
                               fontSize: 30.sp,
                             ),
                           ),
                           TextSpan(
                             text: ' with ',
-                            style: textTheme.headlineMedium?.copyWith(
+                            style: appTextTheme.headlineMedium?.copyWith(
                               fontSize: 30.sp,
                             ),
-                            
                           ),
                           TextSpan(
                             text: 'Sunlight',
-                            style: textTheme.headlineMedium!.copyWith(
+                            style: appTextTheme.headlineMedium!.copyWith(
                               fontWeight: FontWeight.bold,
                               color: const Color.fromARGB(255, 182, 234, 113),
                               fontSize: 30.sp,
@@ -161,8 +151,9 @@ class _SplashScreenState extends State<SplashScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
                     child: Text(
                       'Elevate your solar experience with real-time insights and effortless management.',
-                      style: textTheme.titleLarge?.copyWith(
+                      style: appTextTheme.titleLarge?.copyWith(
                         fontSize: 16.sp,
+                        color: const Color.fromARGB(255, 247, 245, 245),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -181,30 +172,30 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 10.h),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                    child: BottomNavigationBar(
-                      backgroundColor: Colors.transparent,
-                      items: const <BottomNavigationBarItem>[
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.person_outline),
-                          label: 'Login as Guest',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.admin_panel_settings_outlined),
-                          label: 'Login as Admin',
-                        ),
-                      ],
-                      currentIndex: _currentIndex,
-                      selectedItemColor: const Color.fromARGB(255, 182, 234, 113),
-                      unselectedItemColor: Colors.white,
-                      onTap: _onItemTapped,
-                      elevation: 0,
-                    ),
-                  ),
+                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                      child: BottomNavigationBar(
+                        backgroundColor: Colors.transparent,
+                        items: const <BottomNavigationBarItem>[
+                          BottomNavigationBarItem(
+                            icon: Icon(Icons.person_outline),
+                            label: 'Login as Guest',
+                          ),
+                          BottomNavigationBarItem(
+                            icon: Icon(Icons.home),
+                            label: 'Home',
+                          ),
+                        ],
+                        currentIndex: _currentIndex,
+                        selectedItemColor:
+                            const Color.fromARGB(255, 182, 234, 113),
+                        unselectedItemColor: Colors.white,
+                        onTap: _onItemTapped,
+                        elevation: 0,
+                      )),
                 ),
               ),
             ),

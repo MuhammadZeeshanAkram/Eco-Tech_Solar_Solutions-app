@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
 
 class AuthService {
   // Base URL for your Node.js backend
