@@ -2,18 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:frontend/Users/Modules/AUTHENTICATION/services/services.dart';
 
 
-class LoginApp extends StatelessWidget {
-  const LoginApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'Login Interface',
-      home: LoginScreen(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

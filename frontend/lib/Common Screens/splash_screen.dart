@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:frontend/admin/authentication/screens/credential_screen.dart';
-import 'package:frontend/constants/constant.dart';
+import 'package:frontend/Users/Modules/AUTHENTICATION/screens/login_screen.dart';
 import 'dart:ui';
 
 class SplashScreen extends StatefulWidget {
@@ -24,15 +23,9 @@ class _SplashScreenState extends State<SplashScreen> {
       // Navigate to Guest Login Page
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const UserCredentialsScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
-    } else if (index == 1) {
-      // Navigate to Admin Login Page
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const AdminCredentialsScreen()),
-      );
-    }
+    } 
   }
 
   @override
