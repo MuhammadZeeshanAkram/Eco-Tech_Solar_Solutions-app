@@ -1,7 +1,8 @@
+import 'dart:ui'; // Import this for BackdropFilter
 import 'package:flutter/material.dart';
-import 'package:frontend/Users/Modules/AUTHENTICATION/services/services.dart';
-
-
+import 'package:frontend/Users/Modules/AUTHENTICATION/screens/forgot_password_screen.dart';
+import 'package:frontend/Users/Modules/AUTHENTICATION/screens/signup_screen.dart';
+import 'package:frontend/Users/Modules/DASHBOARD/screens/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,10 +11,9 @@ class LoginScreen extends StatefulWidget {
   _LoginScreenState createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool rememberMe = false;
-  final AuthService _authService = AuthService();
 
   // Controllers for TextFields
   final TextEditingController _field1Controller = TextEditingController();
@@ -36,131 +36,199 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Email & Password'),
-            Tab(text: 'Name & Password'),
-            Tab(text: 'Mobile & Password'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Stack(
         children: [
-          buildLoginForm('Email', 'Password', loginWithEmail),
-          buildLoginForm('Name', 'Password', loginWithName),
-          buildLoginForm('Mobile Number', 'Password', loginWithMobile),
+          // Background gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.green,
+                  Color.fromARGB(255, 52, 128, 228),
+                  Colors.white
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          // Blurred background effect
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              color: Colors.black.withOpacity(0.5),
+            ),
+          ),
+          // Main content
+          Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 50),
+                    // Title
+                    const Text(
+                      'Login',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Tab bar for different login options
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: Colors.white,
+                      unselectedLabelColor: Colors.white60,
+                      indicatorColor: Colors.white,
+                      tabs: const [
+                        Tab(text: 'Email'),
+                        Tab(text: 'Name'),
+                        Tab(text: 'Mobile'),
+                      ],
+                    ),
+                    // Tab views containing login forms
+                    SizedBox(
+                      height: 150, // Adjusted height for login forms
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          buildLoginForm('Email', 'Password'),
+                          buildLoginForm('Name', 'Password'),
+                          buildLoginForm('Mobile Number', 'Password'),
+                        ],
+                      ),
+                    ),
+                    // Forgot Password, Login Button and Sign Up below credentials
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Forgot Password
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ForgotScreen(),
+                              ),
+                            );
+                          },
+                            child: const Text(
+                              'Forgot Password?',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Login Button
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const HomeScreen(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            backgroundColor: Colors.blue, // Changed to blue
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(8), // Updated style
+                            ),
+                          ),
+                          icon: const Icon(Icons.arrow_right_alt),
+                          label: const Text(
+                            'Login',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Sign Up text at the bottom
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Don't have an account? ",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const SignUpScreen(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Sign Up',
+                                style: TextStyle(
+                                  color: Colors.blue, // Changed to blue
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
   // Login Form Builder
-  Widget buildLoginForm(String field1, String field2, Function loginFunction) {
+  Widget buildLoginForm(String field1, String field2) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(
+          horizontal: 32, vertical: 10), // Reduced padding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Field for Email/Name/Mobile with rounded corners
           TextField(
             controller: _field1Controller,
-            decoration: InputDecoration(labelText: field1),
+            decoration: InputDecoration(
+              labelText: field1,
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.9),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10), // Reduced spacing
+          // Password field with rounded corners
           TextField(
             controller: _passwordController,
             obscureText: true,
-            decoration: InputDecoration(labelText: field2),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Checkbox(
-                value: rememberMe,
-                onChanged: (value) {
-                  setState(() {
-                    rememberMe = value!;
-                  });
-                },
+            decoration: InputDecoration(
+              labelText: field2,
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.9),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              const Text('Remember Me'),
-            ],
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                // Forgot password logic (You can integrate here)
-              },
-              child: const Text('Forgot Password?'),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: ElevatedButton(
-              onPressed: () => loginFunction(),
-              child: const Text('Sign In'),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: TextButton(
-              onPressed: () {
-                // Navigate to Sign Up
-              },
-              child: const Text("Don't have an account? Sign Up"),
             ),
           ),
         ],
       ),
     );
-  }
-
-  // Login with Email Function
-  void loginWithEmail() async {
-    bool success = await _authService.loginWithEmail(
-      _field1Controller.text,
-      _passwordController.text,
-    );
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login Successful')));
-      // Navigate to dashboard
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login Failed')));
-    }
-  }
-
-  // Login with Name Function
-  void loginWithName() async {
-    bool success = await _authService.loginWithName(
-      _field1Controller.text,
-      _passwordController.text,
-    );
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login Successful')));
-      // Navigate to dashboard
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login Failed')));
-    }
-  }
-
-  // Login with Mobile Function
-  void loginWithMobile() async {
-    bool success = await _authService.loginWithMobile(
-      _field1Controller.text,
-      _passwordController.text,
-    );
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login Successful')));
-      // Navigate to dashboard
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login Failed')));
-    }
   }
 }

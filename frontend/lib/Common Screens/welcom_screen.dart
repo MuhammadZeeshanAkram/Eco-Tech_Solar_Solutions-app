@@ -4,31 +4,14 @@ import 'package:frontend/Users/Modules/AUTHENTICATION/screens/login_screen.dart'
 import 'dart:ui';
 import 'package:frontend/constants.dart'; // Import the constants.dart file
 
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+class WelcomeScreen extends StatefulWidget {
+  const WelcomeScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  int _currentIndex = 0;
-
-  // Function to handle button taps and navigate to respective pages
-  void _onItemTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-
-    if (index == 0) {
-      // Navigate to Guest Login Page
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    }
-  }
-
+class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,7 +87,6 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 410.h),
             // Centered Text with Manual Positioning
             Center(
               child: Column(
@@ -162,7 +144,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ],
               ),
             ),
-            // Positioned Bottom Navigation Bar with Blurred Background
+            // Positioned Button instead of BottomNavigationBar
             Positioned(
               bottom: 30.h,
               left: 16.w,
@@ -172,30 +154,33 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 10.h),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20.0),
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 182, 234, 113),
+                        padding: EdgeInsets.symmetric(vertical: 15.h),
                       ),
-                      child: BottomNavigationBar(
-                        backgroundColor: Colors.transparent,
-                        items: const <BottomNavigationBarItem>[
-                          BottomNavigationBarItem(
-                            icon: Icon(Icons.person_outline),
-                            label: 'Login as Guest',
-                          ),
-                          BottomNavigationBarItem(
-                            icon: Icon(Icons.home),
-                            label: 'Home',
-                          ),
-                        ],
-                        currentIndex: _currentIndex,
-                        selectedItemColor:
-                            const Color.fromARGB(255, 182, 234, 113),
-                        unselectedItemColor: Colors.white,
-                        onTap: _onItemTapped,
-                        elevation: 0,
-                      )),
+                      onPressed: () {
+                        // Navigate to Guest Login Page
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginScreen()),
+                        );
+                      },
+                      child: Text(
+                        'Get Started',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

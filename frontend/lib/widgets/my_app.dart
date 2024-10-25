@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:frontend/Common%20Screens/splash_screen.dart';
+import 'package:frontend/Common%20Screens/welcom_screen.dart';
 import 'package:frontend/Users/Modules/AUTHENTICATION/screens/login_screen.dart';
 import 'package:device_preview/device_preview.dart';
 
@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
               ),
               initialRoute: '/',
               routes: {
-                '/': (context) => const SplashScreen(),
+                '/': (context) => const WelcomeScreen(),
                 '/signup as user': (context) => const LoginScreen(),
                 
               },
