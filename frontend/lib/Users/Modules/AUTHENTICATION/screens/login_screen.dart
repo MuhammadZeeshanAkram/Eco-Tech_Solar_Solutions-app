@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen>
                       indicatorColor: Colors.white,
                       tabs: const [
                         Tab(text: 'Email'),
-                        Tab(text: 'Name'),
+                        Tab(text: 'ID'),
                         Tab(text: 'Mobile'),
                       ],
                     ),
@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen>
                         controller: _tabController,
                         children: [
                           buildLoginForm('Email', 'Password'),
-                          buildLoginForm('Name', 'Password'),
+                          buildLoginForm('Registered ID', 'Password'),
                           buildLoginForm('Mobile Number', 'Password'),
                         ],
                       ),
