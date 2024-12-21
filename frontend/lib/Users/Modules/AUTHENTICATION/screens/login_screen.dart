@@ -1,8 +1,10 @@
-import 'dart:ui'; // Import this for BackdropFilter
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:frontend/Users/Modules/AUTHENTICATION/screens/forgot_password_screen.dart';
-import 'package:frontend/Users/Modules/AUTHENTICATION/screens/signup_screen.dart';
 import 'package:frontend/Users/Modules/DASHBOARD/screens/home_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'forgot_password_screen.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,21 +18,68 @@ class _LoginScreenState extends State<LoginScreen>
   late TabController _tabController;
 
   // Controllers for TextFields
-  final TextEditingController _field1Controller = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this); // Two tabs: Email, Name
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _field1Controller.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
+    _nameController.dispose();
     super.dispose();
+  }
+
+  // Function to submit login details to backend
+  Future<void> _submitLogin(String loginType) async {
+    final field = loginType == 'email' ? _emailController.text : _nameController.text;
+    final password = _passwordController.text;
+
+    if (field.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('All fields are required!')),
+      );
+      return;
+    }
+
+    final url = Uri.parse('http://192.168.18.164:5000/api/auth/login');
+    try {
+      print('Login Data: {loginType: $field, password: $password}'); // Debugging log
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'loginType': field, // Explicitly use 'loginType' as the backend expects
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        final message = json.decode(response.body)['message'];
+        print('Response: ${response.body}'); // Debugging log
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login Failed: $message')),
+        );
+      }
+    } catch (e) {
+      print('Error: $e'); // Debugging log
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
 
   @override
@@ -75,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen>
                     Text(
                       'Login',
                       style: TextStyle(
-                        fontSize: screenWidth * 0.08, // Dynamically adjust title size
+                        fontSize: screenWidth * 0.08,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -89,27 +138,25 @@ class _LoginScreenState extends State<LoginScreen>
                       indicatorColor: Colors.white,
                       tabs: const [
                         Tab(text: 'Email'),
-                        Tab(text: 'ID'),
-                        Tab(text: 'Mobile'),
+                        Tab(text: 'Name'),
                       ],
                     ),
                     SizedBox(
-                      height: screenHeight * 0.25, // Dynamic height for login forms
+                      height: screenHeight * 0.35,
                       child: TabBarView(
                         controller: _tabController,
                         children: [
-                          buildLoginForm('Email', 'Password', screenWidth),
-                          buildLoginForm('Registered ID', 'Password', screenWidth),
-                          buildLoginForm('Mobile Number', 'Password', screenWidth),
+                          // Email Login Form
+                          buildLoginForm('Email', 'Password', _emailController, _passwordController, 'email', screenWidth),
+                          // Name Login Form
+                          buildLoginForm('Name', 'Password', _nameController, _passwordController, 'name', screenWidth),
                         ],
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.02),
-                    // Forgot Password, Login Button, and Sign Up
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Forgot Password
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
@@ -132,15 +179,10 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.01),
-                        // Login Button
                         ElevatedButton.icon(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const HomeScreen(),
-                              ),
-                            );
+                            final loginType = _tabController.index == 0 ? 'email' : 'name';
+                            _submitLogin(loginType);
                           },
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(
@@ -156,12 +198,11 @@ class _LoginScreenState extends State<LoginScreen>
                           label: Text(
                             'Login',
                             style: TextStyle(
-                              fontSize: screenWidth * 0.045, // Responsive text size
+                              fontSize: screenWidth * 0.045,
                             ),
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.02),
-                        // Sign Up text at the bottom
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -205,15 +246,14 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   // Login Form Builder
-  Widget buildLoginForm(String field1, String field2, double screenWidth) {
+  Widget buildLoginForm(String field1, String field2, TextEditingController controller1, TextEditingController controller2, String loginType, double screenWidth) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Field for Email/Name/Mobile with rounded corners
           TextField(
-            controller: _field1Controller,
+            controller: controller1,
             decoration: InputDecoration(
               labelText: field1,
               labelStyle: TextStyle(fontSize: screenWidth * 0.04),
@@ -225,9 +265,8 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
           const SizedBox(height: 10),
-          // Password field with rounded corners
           TextField(
-            controller: _passwordController,
+            controller: controller2,
             obscureText: true,
             decoration: InputDecoration(
               labelText: field2,

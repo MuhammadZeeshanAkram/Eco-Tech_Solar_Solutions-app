@@ -1,8 +1,54 @@
 import 'dart:ui'; // Import this for BackdropFilter
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class ForgotScreen extends StatelessWidget {
+class ForgotScreen extends StatefulWidget {
   const ForgotScreen({super.key});
+
+  @override
+  _ForgotScreenState createState() => _ForgotScreenState();
+}
+
+class _ForgotScreenState extends State<ForgotScreen> {
+  final TextEditingController _emailController = TextEditingController();
+
+  Future<void> _submitEmail() async {
+    final email = _emailController.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your email')),
+      );
+      return;
+    }
+
+    final url = Uri.parse('http://192.168.18.164:5000/api/auth/forgot-password'); // Replace with your backend IP
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email}),
+      );
+
+      if (response.statusCode == 200) {
+        final message = json.decode(response.body)['message'];
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      } else {
+        final message = json.decode(response.body)['message'];
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $message')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +113,7 @@ class ForgotScreen extends StatelessWidget {
                         children: [
                           // Email input field with rounded corners
                           TextField(
+                            controller: _emailController,
                             decoration: InputDecoration(
                               labelText: 'Email',
                               filled: true,
@@ -82,9 +129,7 @@ class ForgotScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     // Submit Button
                     ElevatedButton(
-                      onPressed: () {
-                        // Submit logic for forgot password
-                      },
+                      onPressed: _submitEmail,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         backgroundColor: Colors.blue, // Changed to blue
