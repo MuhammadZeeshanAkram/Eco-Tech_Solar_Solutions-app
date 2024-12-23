@@ -1,15 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
-
-// User schema
-const userSchema = new mongoose.Schema({
-  email: String,
-  name: String,
-  password: String,
-});
-
-const User = mongoose.models.solarusers || mongoose.model('solarusers', userSchema, 'solarusers');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config'); // Import shared secret
+const User = require('../models/User');
 
 // Login Route
 router.post('/login', async (req, res) => {
@@ -20,27 +14,42 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Both loginType and password are required' });
     }
 
-    // Determine login field (email or name)
     const query = loginType.includes('@') ? { email: loginType } : { name: loginType };
-
-    // Find user by email or name
     const user = await User.findOne(query);
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email/name or password' });
     }
 
-    // Validate password
-    if (user.password !== password) {
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid email/name or password' });
     }
 
-    // Successful login
-    res.status(200).json({ message: 'Login successful', user: { email: user.email, name: user.name } });
+    const token = jwt.sign(
+      { id: user._id, email: user.email, name: user.name },
+      JWT_SECRET // Shared secret
+    );
+
+    res.status(200).json({
+      message: 'Login successful',
+      token,
+      user: { email: user.email, name: user.name },
+    });
   } catch (error) {
-    console.error('Login Error:', error);
+    console.error('Login Error:', error.message);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
+
+router.post('/logout', (req, res) => {
+  try {
+    // Placeholder for token invalidation logic (if needed)
+    res.status(200).json({ message: 'Logout successful' });
+  } catch (error) {
+    console.error('Error during logout:', error);
+    res.status(500).json({ message: 'Logout failed' });
+  }
+});
 module.exports = router;

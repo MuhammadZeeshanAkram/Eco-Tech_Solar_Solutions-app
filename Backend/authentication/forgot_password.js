@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
-const bcrypt = require('bcryptjs'); // Import bcryptjs for password hashing
-require('dotenv').config(); // Load environment variables
+const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
 // Define the user schema for the "solarusers" collection
 const userSchema = new mongoose.Schema({
@@ -20,8 +20,8 @@ const User = mongoose.models.solarusers || mongoose.model('solarusers', userSche
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER, // Email from .env file
-    pass: process.env.EMAIL_PASS, // App Password from .env file
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
@@ -45,8 +45,8 @@ router.post('/forgot-password', async (req, res) => {
 
     // Email content
     const mailOptions = {
-      from: process.env.EMAIL_USER, // Sender address
-      to: email, // Receiver's email address
+      from: process.env.EMAIL_USER,
+      to: email,
       subject: 'Password Reset Request',
       text: `Hi ${user.name},\n\nPlease use the following link to reset your password:\n\n${resetLink}\n\nIf you did not request a password reset, please ignore this email.\n\nThank you!`,
     };
@@ -76,7 +76,7 @@ router.get('/reset-password', async (req, res) => {
       return res.status(404).send('Invalid reset link. Email not found.');
     }
 
-    // Render the reset password form with JavaScript handling
+    // Render the reset password form and include the external script
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -95,43 +95,7 @@ router.get('/reset-password', async (req, res) => {
             <br><br>
             <button type="button" id="resetButton">Reset Password</button>
           </form>
-          <script>
-            document.getElementById('resetButton').addEventListener('click', async () => {
-              const email = document.getElementById('email').value;
-              const password = document.getElementById('password').value;
-              const confirmPassword = document.getElementById('confirmPassword').value;
-
-              if (!password || !confirmPassword) {
-                alert('All fields are required.');
-                return;
-              }
-
-              if (password !== confirmPassword) {
-                alert('Passwords do not match.');
-                return;
-              }
-
-              try {
-                const response = await fetch('http://192.168.18.164:5000/api/auth/update-password', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ email, password, confirmPassword }),
-                });
-
-                const result = await response.text();
-                if (response.ok) {
-                  alert(result);
-                } else {
-                  alert('Error: ' + result);
-                }
-              } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while resetting your password.');
-              }
-            });
-          </script>
+          <script src="/static/resetPassword.js"></script>
         </body>
       </html>
     `);
@@ -161,9 +125,9 @@ router.post('/update-password', async (req, res) => {
 
     // Update the user's password in the database
     const user = await User.findOneAndUpdate(
-      { email }, // Find user by email
-      { password: hashedPassword }, // Update with hashed password
-      { new: true } // Return the updated user document
+      { email },
+      { password: hashedPassword },
+      { new: true }
     );
 
     // If user not found

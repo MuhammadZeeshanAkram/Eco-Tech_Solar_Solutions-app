@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:frontend/Users/Modules/DASHBOARD/screens/home_screen.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
@@ -63,10 +64,26 @@ class _LoginScreenState extends State<LoginScreen>
       );
 
       if (response.statusCode == 200) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        final data = json.decode(response.body);
+        final token = data['token']; // Extract JWT token from response
+        print('Login successful. Token: $token');
+
+        if (token != null) {
+          // Store token in SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('jwt_token', token);
+
+          // Navigate to HomeScreen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        } else {
+          print('Token is null. Check backend response.');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Login failed: Token not found')),
+          );
+        }
       } else {
         final message = json.decode(response.body)['message'];
         print('Response: ${response.body}'); // Debugging log

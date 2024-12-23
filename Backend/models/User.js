@@ -1,0 +1,16 @@
+const mongoose = require('mongoose');
+
+// Define the user schema
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  devices: [
+    {
+      sn: { type: String, required: true },
+      tokenId: { type: String, required: true },
+    },
+  ],
+  password: { type: String, required: true },
+});
+
+module.exports = mongoose.models.solarusers || mongoose.model('solarusers', userSchema, 'solarusers');

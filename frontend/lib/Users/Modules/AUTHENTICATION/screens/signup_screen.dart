@@ -14,21 +14,47 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _snController = TextEditingController();
-  final TextEditingController _tokenIdController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+
+  // List to store SN and TokenID controllers
+  final List<Map<String, TextEditingController>> _deviceControllers = [
+    {'sn': TextEditingController(), 'tokenId': TextEditingController()},
+  ];
+
+  // Function to add a new SN and TokenID field
+  void _addDeviceField() {
+    setState(() {
+      _deviceControllers.add({
+        'sn': TextEditingController(),
+        'tokenId': TextEditingController(),
+      });
+    });
+  }
+
+  // Function to remove an SN and TokenID field
+  void _removeDeviceField(int index) {
+    setState(() {
+      _deviceControllers.removeAt(index);
+    });
+  }
 
   // Function to submit form data to backend
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text;
       final name = _nameController.text;
-      final sn = _snController.text;
-      final tokenId = _tokenIdController.text;
       final password = _passwordController.text;
       final confirmPassword = _confirmPasswordController.text;
+
+      // Collect all SN and TokenID values
+      final devices = _deviceControllers.map((device) {
+        return {
+          'sn': device['sn']!.text,
+          'tokenId': device['tokenId']!.text,
+        };
+      }).toList();
 
       final url = Uri.parse('http://192.168.18.164:5000/api/auth/signup');
 
@@ -39,20 +65,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
           body: json.encode({
             'email': email,
             'name': name,
-            'sn': sn,
-            'tokenId': tokenId,
+            'devices': devices,
             'password': password,
             'confirmPassword': confirmPassword,
           }),
         );
 
         if (response.statusCode == 201) {
-          // Success
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Signup Successful: ${response.body}')),
           );
         } else {
-          // Error
           final message = json.decode(response.body)['message'];
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Signup Failed: $message')),
@@ -150,30 +173,60 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         },
                       ),
                       const SizedBox(height: 10),
-                      // SN input field
-                      buildTextField(
-                        'SN',
-                        false,
-                        _snController,
-                        (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter the SN';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      // Token ID input field
-                      buildTextField(
-                        'Token ID',
-                        false,
-                        _tokenIdController,
-                        (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter the Token ID';
-                          }
-                          return null;
-                        },
+                      // Devices (SN and TokenID) fields
+                      Column(
+                        children: [
+                          for (int i = 0; i < _deviceControllers.length; i++)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: buildTextField(
+                                    'SN ${i + 1}',
+                                    false,
+                                    _deviceControllers[i]['sn']!,
+                                    (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter the SN';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: buildTextField(
+                                    'Token ID ${i + 1}',
+                                    false,
+                                    _deviceControllers[i]['tokenId']!,
+                                    (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter the Token ID';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  onPressed: () => _removeDeviceField(i),
+                                  icon: const Icon(Icons.remove_circle,
+                                      color: Colors.red),
+                                ),
+                              ],
+                            ),
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton.icon(
+                              onPressed: _addDeviceField,
+                              icon: const Icon(Icons.add),
+                              label: const Text('Add Device'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 10),
                       // Password input field

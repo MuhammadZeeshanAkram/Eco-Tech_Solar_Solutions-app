@@ -1,7 +1,11 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'dart:convert';
+import 'package:flutter/cupertino.dart';
+import 'package:frontend/Users/Modules/DASHBOARD/screens/energy_generation_graph.dart';
+import 'bottom_nav_bar.dart'; // Import the bottom navbar
+import 'package:shared_preferences/shared_preferences.dart'; // Account details screen
 import 'package:http/http.dart' as http;
-import 'package:fl_chart/fl_chart.dart';
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,307 +15,219 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Map<String, dynamic>? solarData;
-  bool isLoading = true;
+  int _selectedIndex = 0; // Index for bottom navbar
+  List<dynamic> _devices = []; // List of devices
+  String? _selectedDeviceSN; // Selected device SN
+  Map<String, dynamic>? _deviceData; // Data for the selected device
+  List<Map<String, dynamic>> _graphData = []; // Data for the graph
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    fetchSolarData();
+    _fetchDevices();
   }
 
-  Future<void> fetchSolarData() async {
+  // Fetch devices from the backend
+  Future<void> _fetchDevices() async {
+    const url = 'http://192.168.18.164:5000/api/auth/user-devices';
+    setState(() => _isLoading = true);
+
     try {
-      // Replace with your backend IP or domain
-      final response = await http.get(Uri.parse('http://192.168.18.164:5000/api/realtime-data'));
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token'); // Retrieve stored token
+
+      if (token == null) {
+        throw Exception('No JWT token found');
+      }
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
       if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-
-        if (responseData['success'] == true) {
-          setState(() {
-            solarData = responseData['result'];
-            isLoading = false;
-          });
-        } else {
-          throw Exception('Failed to load data: ${responseData['exception']}');
-        }
+        final data = json.decode(response.body);
+        setState(() {
+          _devices = data['devices'];
+          _selectedDeviceSN = _devices.isNotEmpty ? _devices.first['sn'] : null;
+          if (_selectedDeviceSN != null) {
+            _fetchDeviceData(_selectedDeviceSN!);
+          }
+          _isLoading = false;
+        });
       } else {
-        throw Exception('Failed to load data: HTTP ${response.statusCode}');
+        throw Exception('Failed to fetch devices. Status code: ${response.statusCode}');
       }
     } catch (error) {
-      print('Error fetching data: $error');
-      setState(() {
-        isLoading = false;
-      });
+      print('Error fetching devices: $error');
+      setState(() => _isLoading = false);
     }
   }
 
+  // Fetch real-time data for the selected device
+  Future<void> _fetchDeviceData(String sn) async {
+    const url = 'http://192.168.18.164:5000/api/solar/realtime-data';
+    setState(() => _isLoading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token'); // Retrieve stored token
+
+      if (token == null) {
+        throw Exception('No JWT token found');
+      }
+
+      final response = await http.get(
+        Uri.parse('$url?deviceSN=$sn'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _deviceData = data['data'];
+          _graphData = _generateGraphData(); // Generate graph data based on the device data
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to fetch device data. Status code: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error fetching device data: $error');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // Generate graph data from device data
+  List<Map<String, dynamic>> _generateGraphData() {
+    if (_deviceData == null) return [];
+
+    // Mock graph data based on device data
+    return List.generate(
+      24,
+      (index) => {
+        'hour': index,
+        'energy': (_deviceData!['acpower'] ?? 0) * (index % 5 + 1) / 10.0, // Example calculation
+      },
+    );
+  }
+
+  // Logout function
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('jwt_token'); // Remove the stored token
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Background gradient for an eye-catching look
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color.fromARGB(255, 16, 100, 243), Color.fromARGB(120, 14, 12, 12)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
-          // Main content
-          SafeArea(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // App title
-                    const Text(
-                      'Solar Monitoring Dashboard',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Show loading spinner while data is fetched
-                    if (isLoading)
-                      const Center(
-                        child: CircularProgressIndicator(),
-                      )
-                    else if (solarData != null) ...[
-                      // Display fetched data in a clean grid format
-                      GridView.count(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: [
-                          buildInfoCard('Current Power', '${solarData?["acpower"] ?? "N/A"} W', Colors.green),
-                          buildInfoCard('Production Today', '${solarData?["yieldtoday"] ?? "N/A"} kWh', Colors.blue),
-                          buildInfoCard('Total Production', '${solarData?["yieldtotal"] ?? "N/A"} kWh', Colors.blue),
-                          buildInfoCard('Feed-in Power', '${solarData?["feedinpower"] ?? "N/A"} W', Colors.orange),
-                          buildInfoCard('Feed-in Energy', '${solarData?["feedinenergy"] ?? "N/A"} kWh', Colors.orange),
-                          buildInfoCard('Battery Power', '${solarData?["batPower"] ?? "No Data"} W', Colors.purple),
-                          buildInfoCard('Power DC1', '${solarData?["powerdc1"] ?? "N/A"} W', Colors.teal),
-                          buildInfoCard('Inverter Status', '${solarData?["inverterStatus"] ?? "N/A"}', Colors.red),
-                          buildInfoCard('Last Upload Time', '${solarData?["uploadTime"] ?? "N/A"}', Colors.teal),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Graphical Representation
-                      // Graphical Representation
-// Graphical Representation
-Card(
-  color: Colors.white.withOpacity(0.9),
-  elevation: 4,
-  shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(15),
-  ),
-  child: const Padding(
-    padding: EdgeInsets.all(20),
-    child: SizedBox(
-      height: 300,
-      child: GraphPainter(
-        graphData: [
-          FlSpot(0, 10),
-          FlSpot(2, 30),
-          FlSpot(4, 50),
-          FlSpot(6, 80),
-          FlSpot(8, 60),
-          FlSpot(10, 40),
-          FlSpot(12, 20),
-        ], // Replace with real-time data if available
-      ),
-    ),
-  ),
-),
-
-
-
-                      const SizedBox(height: 20),
-                    ] else
-                      const Center(
-                        child: Text(
-                          'Failed to load data',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    const SizedBox(height: 20),
-
-                    // Check the Plant Button
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // Navigate to check the plant screen
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
+    List<Widget> screens = [
+      // Screen for Square Boxes
+      _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _selectedDeviceSN == null
+              ? const Center(
+                  child: Text(
+                    'Please select a device to view data',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                )
+              : _deviceData != null
+                  ? ListView.builder(
+                      itemCount: _deviceData!.length,
+                      itemBuilder: (context, index) {
+                        final entry = _deviceData!.entries.elementAt(index);
+                        return Card(
+                          margin: const EdgeInsets.all(12),
+                          color: Colors.white.withOpacity(0.2),
+                          elevation: 4,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                        ),
-                        child: const Text(
-                          'Check the Plant',
-                          style: TextStyle(fontSize: 18),
-                        ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  entry.key,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  entry.value.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : const Center(
+                      child: Text(
+                        'No data available for the selected device',
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  // Helper function to create info cards
-  Widget buildInfoCard(String title, String value, Color valueColor) {
-    return Card(
-      color: Colors.white.withOpacity(0.9),
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: valueColor,
-              ),
-            ),
-          ],
+      // Graph Screen
+      EnergyGenerationGraph(energyData: _graphData),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Solar System Monitoring',
+          style: TextStyle(fontSize: 16),
         ),
-      ),
-    );
-  }
-}
-
-// Custom painter for the energy generation graph
-class GraphPainter extends StatelessWidget {
-  final List<FlSpot> graphData;
-
-  const GraphPainter({required this.graphData, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return LineChart(
-      LineChartData(
-        gridData: const FlGridData(
-          show: true,
-          drawHorizontalLine: true,
-          drawVerticalLine: true,
-          horizontalInterval: 20, // Adjust spacing for horizontal grid lines
-          verticalInterval: 2, // Adjust spacing for vertical grid lines
-        ),
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 50, // Increase reserved size to avoid clipping
-              getTitlesWidget: (value, meta) {
-                if (value % 20 == 0) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0), // Add margin for better alignment
-                    child: Text(
-                      '${value.toInt()} W',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  );
-                }
-                return const SizedBox(); // Skip intermediate labels
+        backgroundColor: const Color(0xFF1E88E5),
+        actions: [
+          if (_devices.isNotEmpty)
+            DropdownButton<String>(
+              value: _selectedDeviceSN,
+              dropdownColor: Colors.white,
+              underline: const SizedBox(),
+              items: _devices.map<DropdownMenuItem<String>>((device) {
+                return DropdownMenuItem<String>(
+                  value: device['sn'],
+                  child: Text(
+                    device['sn'],
+                    style: const TextStyle(color: Colors.black, fontSize: 14),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedDeviceSN = value;
+                  if (value != null) {
+                    _fetchDeviceData(value);
+                  }
+                });
               },
             ),
-          ),
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false), // Hide right-side labels
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 30, // Add reserved size for bottom alignment
-              getTitlesWidget: (value, meta) {
-                if (value % 2 == 0) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8.0), // Add margin for spacing
-                    child: Text(
-                      '${value.toInt()}h',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  );
-                }
-                return const SizedBox(); // Skip intermediate labels
-              },
-            ),
-          ),
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false), // Hide top-side labels
-          ),
-        ),
-        borderData: FlBorderData(
-          show: true,
-          border: const Border(
-            left: BorderSide(color: Colors.black, width: 1),
-            bottom: BorderSide(color: Colors.black, width: 1),
-          ),
-        ),
-        minX: 0,
-        maxX: 12, // Adjust according to your data's x-axis range
-        minY: 0,
-        maxY: graphData.isNotEmpty
-            ? graphData.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 10
-            : 100, // Add padding to the max value
-        lineBarsData: [
-          LineChartBarData(
-            spots: graphData,
-            isCurved: true,
-            barWidth: 4,
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                colors: [
-                  Colors.green.withOpacity(0.3),
-                  Colors.blue.withOpacity(0.1),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-            gradient: const LinearGradient(
-              colors: [Colors.green, Colors.blue],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
         ],
+      ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: screens,
+      ),
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
     );
   }

@@ -10,7 +10,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Set the fit size for the UI design
     return DevicePreview(
       enabled: !kReleaseMode,
       builder: (context) {
@@ -28,11 +27,11 @@ class MyApp extends StatelessWidget {
                 primarySwatch: Colors.blue,
                 textTheme: Typography.englishLike2018.apply(fontSizeFactor: 1.sp),
               ),
-              initialRoute: '/',
+              initialRoute: '/', // Start with the Welcome screen
               routes: {
-                '/': (context) => const WelcomeScreen(),
-                '/signup as user': (context) => const LoginScreen(),
-                
+                '/': (context) => const WelcomeScreen(), // Welcome screen
+                '/login': (context) => const LoginScreen(), // Login screen
+                '/signup': (context) => const LoginScreen(), // Signup screen (example reuse)
               },
             );
           },
