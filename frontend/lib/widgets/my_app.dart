@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/Common%20Screens/welcom_screen.dart';
 import 'package:frontend/Users/Modules/AUTHENTICATION/screens/login_screen.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:frontend/Users/Modules/AUTHENTICATION/screens/signup_screen.dart';
+import 'package:frontend/Users/Modules/DASHBOARD/screens/profile.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -31,7 +33,8 @@ class MyApp extends StatelessWidget {
               routes: {
                 '/': (context) => const WelcomeScreen(), // Welcome screen
                 '/login': (context) => const LoginScreen(), // Login screen
-                '/signup': (context) => const LoginScreen(), // Signup screen (example reuse)
+                '/signup': (context) => const SignUpScreen(), // Signup screen (example reuse)
+                '/profile': (context) => const ProfileScreen(), // Profile screen
               },
             );
           },

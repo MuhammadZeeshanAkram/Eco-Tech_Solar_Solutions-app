@@ -22,6 +22,7 @@ dependencies:
   star_menu: ^4.0.1
   shared_preferences: ^2.3.4
   water_drop_nav_bar: ^2.2.2
+  d_chart: ^2.10.2
 
 
 dev_dependencies:

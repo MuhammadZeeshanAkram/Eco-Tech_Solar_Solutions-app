@@ -6,6 +6,7 @@ import 'bottom_nav_bar.dart'; // Import the bottom navbar
 import 'package:shared_preferences/shared_preferences.dart'; // Account details screen
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'profile.dart'; // Import profile screen
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,11 +22,42 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic>? _deviceData; // Data for the selected device
   List<Map<String, dynamic>> _graphData = []; // Data for the graph
   bool _isLoading = false;
+  String? _userName; // User's name
 
   @override
   void initState() {
     super.initState();
+    _fetchUserName();
     _fetchDevices();
+  }
+
+  // Fetch user's name from the backend
+  Future<void> _fetchUserName() async {
+    const url = 'http://192.168.18.164:5000/api/auth/user-info';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token'); // Retrieve stored token
+
+      if (token == null) {
+        throw Exception('No JWT token found');
+      }
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _userName = data['name']; // Assign user's name
+        });
+      } else {
+        throw Exception('Failed to fetch user info. Status code: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error fetching user info: $error');
+    }
   }
 
   // Fetch devices from the backend
@@ -113,13 +145,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Logout function
-  Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('jwt_token'); // Remove the stored token
-    Navigator.pushReplacementNamed(context, '/login');
-  }
-
   @override
   Widget build(BuildContext context) {
     List<Widget> screens = [
@@ -134,21 +159,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               : _deviceData != null
-                  ? ListView.builder(
+                  ? GridView.builder(
+                      padding: const EdgeInsets.all(12),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2, // Two items per row
+                        crossAxisSpacing: 12, // Spacing between columns
+                        mainAxisSpacing: 12, // Spacing between rows
+                        childAspectRatio: 1, // Make boxes square
+                      ),
                       itemCount: _deviceData!.length,
                       itemBuilder: (context, index) {
                         final entry = _deviceData!.entries.elementAt(index);
                         return Card(
-                          margin: const EdgeInsets.all(12),
                           color: Colors.white.withOpacity(0.2),
                           elevation: 4,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(20),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
                                   entry.key,
@@ -164,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.blue,
+                                    color: Color.fromARGB(255, 8, 8, 8),
                                   ),
                                 ),
                               ],
@@ -182,27 +214,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // Graph Screen
       EnergyGenerationGraph(energyData: _graphData),
+
+      // Profile Screen
+      const ProfileScreen(),
     ];
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text(
           'Solar System Monitoring',
-          style: TextStyle(fontSize: 16),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
-        backgroundColor: const Color(0xFF1E88E5),
+        backgroundColor: const Color.fromARGB(255, 22, 69, 163),
         actions: [
           if (_devices.isNotEmpty)
             DropdownButton<String>(
               value: _selectedDeviceSN,
-              dropdownColor: Colors.white,
+              dropdownColor: const Color.fromARGB(255, 28, 68, 155),
               underline: const SizedBox(),
               items: _devices.map<DropdownMenuItem<String>>((device) {
                 return DropdownMenuItem<String>(
                   value: device['sn'],
                   child: Text(
                     device['sn'],
-                    style: const TextStyle(color: Colors.black, fontSize: 14),
+                    style: const TextStyle(color: Color.fromARGB(255, 245, 245, 245), fontSize: 14),
                   ),
                 );
               }).toList(),
@@ -217,9 +257,36 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: screens,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color.fromARGB(255, 125, 173, 241), Color.fromARGB(255, 34, 59, 170), Colors.green],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                _userName != null ? 'Hi, $_userName!' : 'Loading...',
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            Expanded(
+              child: IndexedStack(
+                index: _selectedIndex,
+                children: screens,
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: BottomNavBar(
         selectedIndex: _selectedIndex,

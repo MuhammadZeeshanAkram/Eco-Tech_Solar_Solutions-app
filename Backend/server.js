@@ -9,6 +9,8 @@ const path = require('path');
 const signupRoutes = require('./authentication/signup');
 const loginRoutes = require('./authentication/login');
 const forgotPasswordRoutes = require('./authentication/forgot_password');
+const signoutRoutes = require('./authentication/logout');
+const profileRoutes = require('./authentication/profile');
 const devicesRoutes = require('./solar data/devices');
 const realTimeDataRoutes = require('./solar data/real-time-data'); // New route
 
@@ -43,6 +45,8 @@ mongoose
 app.use('/api/auth', signupRoutes);
 app.use('/api/auth', loginRoutes);
 app.use('/api/auth', forgotPasswordRoutes);
+app.use('/api/auth', signoutRoutes);
+app.use('/api/auth', profileRoutes);
 app.use('/api/auth', devicesRoutes);
 app.use('/api/solar', realTimeDataRoutes); // New real-time data route
 
