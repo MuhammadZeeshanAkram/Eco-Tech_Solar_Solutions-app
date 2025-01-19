@@ -27,6 +27,7 @@ router.get('/realtime-data', authenticate, async (req, res) => {
 
     const { tokenId, sn } = device;
     const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${tokenId}&sn=${sn}`;
+    
 
     // Call Solax Cloud API
     const response = await axios.get(url);

@@ -33,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Fetch user's name from the backend
   Future<void> _fetchUserName() async {
-    const url = 'http://192.168.18.164:5000/api/auth/user-info';
+    const url = 'https://eco-tech-solar-solutions-app.onrender.com/api/auth/user-info';
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('jwt_token'); // Retrieve stored token
@@ -62,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Fetch devices from the backend
   Future<void> _fetchDevices() async {
-    const url = 'http://192.168.18.164:5000/api/auth/user-devices';
+    const url = 'https://eco-tech-solar-solutions-app.onrender.com/api/auth/user-devices';
     setState(() => _isLoading = true);
 
     try {
@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Fetch real-time data for the selected device
   Future<void> _fetchDeviceData(String sn) async {
-    const url = 'http://192.168.18.164:5000/api/solar/realtime-data';
+    const url = 'https://eco-tech-solar-solutions-app.onrender.com/api/solar/realtime-data';
     setState(() => _isLoading = true);
 
     try {
@@ -295,6 +295,15 @@ class _HomeScreenState extends State<HomeScreen> {
             _selectedIndex = index;
           });
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('jwt_token'); // Remove JWT token
+          Navigator.pushReplacementNamed(context, '/login'); // Navigate to login screen
+        },
+        backgroundColor: const Color.fromARGB(255, 22, 69, 163),
+        child: const Icon(Icons.logout),
       ),
     );
   }
