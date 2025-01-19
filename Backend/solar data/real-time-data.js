@@ -8,46 +8,57 @@ router.get('/realtime-data', authenticate, async (req, res) => {
   try {
     const { deviceSN } = req.query;
 
+    // Validate if the Device SN is provided
     if (!deviceSN) {
-      return res.status(400).json({ message: 'Device SN is required' });
+      return res.status(400).json({ success: false, message: 'Device SN is required' });
     }
 
+    // Find the authenticated user
     const user = await User.findById(req.user.id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    // Find the device belonging to the user
     const device = user.devices.find((d) => d.sn === deviceSN);
     if (!device) {
-      return res.status(404).json({ message: 'Device not found for this user' });
+      return res.status(404).json({ success: false, message: 'Device not found for this user' });
     }
 
-    const { tokenId, sn } = device;
-    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?sn=${sn}`;
+    const { tokenId, sn } = device; // Extract tokenId and serial number (SN)
+    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${tokenId}&sn=${sn}`;
 
+    // Make the GET request to SolaxCloud API
     const response = await axios.get(url, {
       headers: {
         'Content-Type': 'application/json',
-        tokenId: tokenId, // Include tokenId in headers
       },
     });
 
-    if (response.status === 200) {
+    // Handle successful response
+    if (response.status === 200 && response.data.success) {
       return res.status(200).json({
         success: true,
+        message: 'Real-time data fetched successfully',
         deviceSN: sn,
-        data: response.data,
+        data: response.data.result, // Ensure the correct nested property is returned
       });
     } else {
+      // Handle API-level errors
       return res.status(400).json({
         success: false,
-        message: 'Failed to fetch real-time data',
+        message: response.data.exception || 'Failed to fetch real-time data',
         details: response.data,
       });
     }
   } catch (error) {
-    console.error('Error fetching real-time data:', error.response?.data || error.message);
-    res.status(500).json({ message: 'Failed to fetch real-time data' });
+    // Log and handle unexpected errors
+    console.error('Error fetching real-time data:', error.response?.data || error.stack || error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while fetching real-time data',
+      error: error.response?.data || error.message,
+    });
   }
 });
 
