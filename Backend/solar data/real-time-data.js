@@ -2,77 +2,81 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const User = require('../models/User');
-const authenticate = require('../authenticate/authenticate'); // Middleware for authentication
+const authenticate = require('../authenticate/authenticate'); // Import authenticate middleware
+
+
+const authenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized: Missing Bearer Token' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET); // Verify the token
+    req.user = decoded; // Attach decoded token to request
+    next();
+  } catch (error) {
+    console.error('Token Verification Error:', error.message);
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+};
+
 
 router.get('/realtime-data', authenticate, async (req, res) => {
   try {
     const { deviceSN } = req.query;
 
-    // Step 1: Validate if the Device SN is provided
+    // Validate if the Device SN is provided
     if (!deviceSN) {
-      console.error('Error: Device SN is missing in the request');
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Device SN is required in the query parameters.' 
-      });
+      return res.status(400).json({ success: false, message: 'Device SN is required' });
     }
 
-    // Step 2: Fetch the authenticated user from the database
+    // Find the authenticated user
     const user = await User.findById(req.user.id);
     if (!user) {
-      console.error(`Error: User with ID ${req.user.id} not found.`);
-      return res.status(404).json({ 
-        success: false, 
-        message: 'User not found. Please ensure you are logged in.' 
-      });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Step 3: Check if the user has the device with the given serial number (SN)
+    // Find the device belonging to the user
     const device = user.devices.find((d) => d.sn === deviceSN);
     if (!device) {
-      console.error(`Error: Device with SN ${deviceSN} not found for user ${req.user.id}.`);
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Device not found. Please check the provided device serial number.' 
-      });
+      return res.status(404).json({ success: false, message: 'Device not found for this user' });
     }
 
-    // Step 4: Extract tokenId and serial number (SN) for the API request
-    const { tokenId, sn } = device;
+    const { tokenId, sn } = device; // Extract tokenId and serial number (SN)
     const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${tokenId}&sn=${sn}`;
 
-    console.log(`Making API request to: ${url}`);
-
-    // Step 5: Make the GET request to SolaxCloud API
+    // Make the GET request to SolaxCloud API
     const response = await axios.get(url, {
       headers: {
-        'Content-Type': 'application/json', // Set headers for the request
+        'Content-Type': 'application/json',
       },
     });
 
-    // Step 6: Check response status and content
+    // Handle successful response
     if (response.status === 200 && response.data.success) {
-      console.log(`Success: Real-time data fetched for device SN: ${sn}`);
       return res.status(200).json({
         success: true,
-        message: 'Real-time data fetched successfully.',
+        message: 'Real-time data fetched successfully',
         deviceSN: sn,
-        data: response.data.result, // Return the data from the API response
+        data: response.data.result, // Ensure the correct nested property is returned
       });
     } else {
-      console.error(`API Error: ${response.data.exception || 'Unknown error'}`);
+      // Handle API-level errors
       return res.status(400).json({
         success: false,
-        message: response.data.exception || 'Failed to fetch real-time data from the API.',
+        message: response.data.exception || 'Failed to fetch real-time data',
         details: response.data,
       });
     }
   } catch (error) {
-    // Step 7: Handle unexpected errors and log for debugging
-    console.error('Unexpected Error:', error.response?.data || error.message);
+    // Log and handle unexpected errors
+    console.error('Error fetching real-time data:', error.response?.data || error.stack || error.message);
     return res.status(500).json({
       success: false,
-      message: 'An unexpected error occurred while fetching real-time data.',
+      message: 'An error occurred while fetching real-time data',
       error: error.response?.data || error.message,
     });
   }
