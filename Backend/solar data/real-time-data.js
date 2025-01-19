@@ -2,61 +2,77 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const User = require('../models/User');
-const authenticate = require('../authenticate/authenticate'); // Import authenticate middleware
+const authenticate = require('../authenticate/authenticate'); // Middleware for authentication
 
 router.get('/realtime-data', authenticate, async (req, res) => {
   try {
     const { deviceSN } = req.query;
 
-    // Validate if the Device SN is provided
+    // Step 1: Validate if the Device SN is provided
     if (!deviceSN) {
-      return res.status(400).json({ success: false, message: 'Device SN is required' });
+      console.error('Error: Device SN is missing in the request');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Device SN is required in the query parameters.' 
+      });
     }
 
-    // Find the authenticated user
+    // Step 2: Fetch the authenticated user from the database
     const user = await User.findById(req.user.id);
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      console.error(`Error: User with ID ${req.user.id} not found.`);
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found. Please ensure you are logged in.' 
+      });
     }
 
-    // Find the device belonging to the user
+    // Step 3: Check if the user has the device with the given serial number (SN)
     const device = user.devices.find((d) => d.sn === deviceSN);
     if (!device) {
-      return res.status(404).json({ success: false, message: 'Device not found for this user' });
+      console.error(`Error: Device with SN ${deviceSN} not found for user ${req.user.id}.`);
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Device not found. Please check the provided device serial number.' 
+      });
     }
 
-    const { tokenId, sn } = device; // Extract tokenId and serial number (SN)
+    // Step 4: Extract tokenId and serial number (SN) for the API request
+    const { tokenId, sn } = device;
     const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${tokenId}&sn=${sn}`;
 
-    // Make the GET request to SolaxCloud API
+    console.log(`Making API request to: ${url}`);
+
+    // Step 5: Make the GET request to SolaxCloud API
     const response = await axios.get(url, {
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json', // Set headers for the request
       },
     });
 
-    // Handle successful response
+    // Step 6: Check response status and content
     if (response.status === 200 && response.data.success) {
+      console.log(`Success: Real-time data fetched for device SN: ${sn}`);
       return res.status(200).json({
         success: true,
-        message: 'Real-time data fetched successfully',
+        message: 'Real-time data fetched successfully.',
         deviceSN: sn,
-        data: response.data.result, // Ensure the correct nested property is returned
+        data: response.data.result, // Return the data from the API response
       });
     } else {
-      // Handle API-level errors
+      console.error(`API Error: ${response.data.exception || 'Unknown error'}`);
       return res.status(400).json({
         success: false,
-        message: response.data.exception || 'Failed to fetch real-time data',
+        message: response.data.exception || 'Failed to fetch real-time data from the API.',
         details: response.data,
       });
     }
   } catch (error) {
-    // Log and handle unexpected errors
-    console.error('Error fetching real-time data:', error.response?.data || error.stack || error.message);
+    // Step 7: Handle unexpected errors and log for debugging
+    console.error('Unexpected Error:', error.response?.data || error.message);
     return res.status(500).json({
       success: false,
-      message: 'An error occurred while fetching real-time data',
+      message: 'An unexpected error occurred while fetching real-time data.',
       error: error.response?.data || error.message,
     });
   }
