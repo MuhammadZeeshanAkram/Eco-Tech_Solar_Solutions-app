@@ -8,7 +8,7 @@ const authenticate = require('../authenticate/authenticate'); // Import authenti
 
 
 
-router.get('/realtime-data', authenticate, async (req, res) => {
+router.get('/realtime-data',  async (req, res) => {
   try {
     const { deviceSN } = req.query;
 
