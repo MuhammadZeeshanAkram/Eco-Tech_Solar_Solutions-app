@@ -112,7 +112,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
       final response = await http.get(
         Uri.parse('$url?deviceSN=$sn'),
-        headers: {'Authorization': 'Bearer $token'},
+        headers: {'Authorization': 'Bearer $token','Content-Type': 'application/json',},
+        
       );
 
       if (response.statusCode == 200) {
