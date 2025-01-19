@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const cors = require('cors'); // Import cors
 const axios = require('axios');
 const User = require('../models/User');
 const authenticate = require('../authenticate/authenticate'); // Import authenticate middleware
 
+// Apply CORS to this route
+router.use(cors());
 
-
-
-
-router.get('/realtime-data',  async (req, res) => {
+router.get('/realtime-data', authenticate, async (req, res) => {
   try {
     const { deviceSN } = req.query;
 
