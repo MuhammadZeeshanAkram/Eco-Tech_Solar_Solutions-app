@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
@@ -19,7 +18,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-
+app.use(helmet()); // Security headers
+app.use(bodyParser.json()); // Parse JSON payloads
+app.use('/static', express.static(path.join(__dirname, 'static'))); // Serve static files
 
 // Check for MongoDB connection string
 if (!process.env.MONGO_URI) {
@@ -33,6 +34,15 @@ mongoose
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
+// Global CORS Configuration
+// (Apply CORS only for routes that don't handle their own CORS)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*'); // Allow all origins
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE'); // Allowed methods
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Allowed headers
+  next();
+});
+
 // Routes
 app.use('/api/auth', signupRoutes);
 app.use('/api/auth', loginRoutes);
@@ -44,7 +54,7 @@ app.use('/api/solar', realTimeDataRoutes); // New real-time data route
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Unexpected error:', err);
+  console.error('Unexpected error:', err.stack || err);
   res.status(500).json({ message: 'Internal Server Error' });
 });
 
