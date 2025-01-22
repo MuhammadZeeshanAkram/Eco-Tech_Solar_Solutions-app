@@ -49,8 +49,10 @@ router.get('/realtime-data', authenticate, async (req, res) => {
     const response = await axios.get(url, {
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'PostmanRuntime/7.29.2',
       },
-      timeout: 15000, // Set timeout to 15 seconds
+      timeout: 15000, // Set timeout to 15 seconds // Set timeout to 15 seconds
     });
 
     // Step 6: Handle Solax API response
