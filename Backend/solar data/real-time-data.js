@@ -8,7 +8,7 @@ const authenticate = require('../authenticate/authenticate'); // Import authenti
 // Apply CORS to this route
 router.use(cors());
 
-router.get('/realtime-data', authenticate, async (req, res) => {
+router.get('/realtime-data', async (req, res) => {
   try {
     // Step 1: Extract deviceSN from the request query
     const { deviceSN } = req.query;
@@ -46,7 +46,9 @@ router.get('/realtime-data', authenticate, async (req, res) => {
 
     // Step 5: Make GET request to Solax API
     const response = await axios.get(url, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       timeout: 15000, // Set timeout to 15 seconds
     });
 
@@ -60,7 +62,7 @@ router.get('/realtime-data', authenticate, async (req, res) => {
         data: response.data.result,
       });
     } else {
-      console.error('Solax API Error Response:', response.data);
+      console.error('Solax API returned an error:', response.data);
       return res.status(400).json({
         success: false,
         message: response.data.exception || 'Failed to fetch real-time data',
@@ -69,7 +71,7 @@ router.get('/realtime-data', authenticate, async (req, res) => {
     }
   } catch (error) {
     // Step 7: Handle unexpected errors and log details
-    console.error('Error Connecting to Solax API:', error.message || error.stack);
+    console.error('Error connecting to Solax API:', error.response?.data || error.message || error.stack);
     return res.status(500).json({
       success: false,
       message: 'An error occurred while fetching real-time data',
