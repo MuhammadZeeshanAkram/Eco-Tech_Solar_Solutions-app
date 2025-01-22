@@ -23,7 +23,7 @@ class _ForgotScreenState extends State<ForgotScreen> {
       return;
     }
 
-    final url = Uri.parse('https://eco-tech-solar-solutions-app.onrender.com/api/auth/forgot-password'); // Replace with your backend IP
+    final url = Uri.parse('http://192.168.18.164:5000/api/auth/forgot-password'); // Replace with your backend IP
 
     try {
       final response = await http.post(

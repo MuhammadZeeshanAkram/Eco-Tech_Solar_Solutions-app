@@ -10,45 +10,59 @@ router.use(cors());
 
 router.get('/realtime-data', authenticate, async (req, res) => {
   try {
+    // Step 1: Extract deviceSN from the request query
     const { deviceSN } = req.query;
 
-    // Validate if the Device SN is provided
+    // Log incoming request details
+    console.log('Received request for real-time data with deviceSN:', deviceSN);
+
+    // Step 2: Validate if deviceSN is provided
     if (!deviceSN) {
+      console.error('Device SN is missing in the request');
       return res.status(400).json({ success: false, message: 'Device SN is required' });
     }
 
-    // Find the authenticated user
+    // Step 3: Authenticate user
     const user = await User.findById(req.user.id);
     if (!user) {
+      console.error('Authenticated user not found');
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Find the device belonging to the user
+    // Step 4: Validate if device belongs to user
     const device = user.devices.find((d) => d.sn === deviceSN);
     if (!device) {
+      console.error(`Device with SN ${deviceSN} not found for user ${req.user.id}`);
       return res.status(404).json({ success: false, message: 'Device not found for this user' });
     }
 
-    const { tokenId, sn } = device; // Extract tokenId and serial number (SN)
-    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${tokenId}&sn=${sn}`;
+    const { tokenId, sn } = device; // Extract tokenId and serial number
+    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${encodeURIComponent(
+      tokenId
+    )}&sn=${encodeURIComponent(sn)}`; // Encode tokenId and sn for safe URL usage
 
-    // Make the GET request to SolaxCloud API
+    // Log Solax API request details
+    console.log('Requesting Solax API with URL:', url);
+
+    // Step 5: Make GET request to Solax API
     const response = await axios.get(url, {
       headers: {
         'Content-Type': 'application/json',
       },
+      timeout: 15000, // Set timeout to 15 seconds
     });
 
-    // Handle successful response
+    // Step 6: Handle Solax API response
     if (response.status === 200 && response.data.success) {
+      console.log('Solax API responded successfully:', response.data.result);
       return res.status(200).json({
         success: true,
         message: 'Real-time data fetched successfully',
         deviceSN: sn,
-        data: response.data.result, // Ensure the correct nested property is returned
+        data: response.data.result,
       });
     } else {
-      // Handle API-level errors
+      console.error('Solax API returned an error:', response.data);
       return res.status(400).json({
         success: false,
         message: response.data.exception || 'Failed to fetch real-time data',
@@ -56,8 +70,8 @@ router.get('/realtime-data', authenticate, async (req, res) => {
       });
     }
   } catch (error) {
-    // Log and handle unexpected errors
-    console.error('Error fetching real-time data:', error.response?.data || error.stack || error.message);
+    // Step 7: Handle unexpected errors and log details
+    console.error('Error connecting to Solax API:', error.response?.data || error.message || error.stack);
     return res.status(500).json({
       success: false,
       message: 'An error occurred while fetching real-time data',
