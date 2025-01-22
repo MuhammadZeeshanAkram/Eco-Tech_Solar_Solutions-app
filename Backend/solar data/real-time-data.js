@@ -8,7 +8,7 @@ const authenticate = require('../authenticate/authenticate'); // Import authenti
 // Apply CORS to this route
 router.use(cors());
 
-router.get('/realtime-data', async (req, res) => {
+router.get('/realtime-data', authenticate, async (req, res) => {
   try {
     // Step 1: Extract deviceSN from the request query
     const { deviceSN } = req.query;
@@ -22,7 +22,7 @@ router.get('/realtime-data', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Device SN is required' });
     }
 
-    // Step 3: Authenticate user
+    // Step 3: Authenticate user and fetch user data
     const user = await User.findById(req.user.id);
     if (!user) {
       console.error('Authenticated user not found');
@@ -72,11 +72,21 @@ router.get('/realtime-data', async (req, res) => {
   } catch (error) {
     // Step 7: Handle unexpected errors and log details
     console.error('Error connecting to Solax API:', error.response?.data || error.message || error.stack);
-    return res.status(500).json({
-      success: false,
-      message: 'An error occurred while fetching real-time data',
-      error: error.response?.data || error.message,
-    });
+
+    // Differentiate between Solax API errors and other errors
+    if (error.response) {
+      return res.status(error.response.status || 500).json({
+        success: false,
+        message: 'Error occurred while connecting to Solax API',
+        error: error.response.data || error.message,
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error occurred',
+        error: error.message,
+      });
+    }
   }
 });
 
