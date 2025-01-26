@@ -37,9 +37,7 @@ router.get('/realtime-data', authenticate, async (req, res) => {
     }
 
     const { tokenId, sn } = device; // Extract tokenId and serial number
-    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${encodeURIComponent(
-      tokenId
-    )}&sn=${encodeURIComponent(sn)}`;
+    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${encodeURIComponent(tokenId)}&sn=${encodeURIComponent(sn)}`;
      // Encode tokenId and sn for safe URL usage
 
     // Log Solax API request details
