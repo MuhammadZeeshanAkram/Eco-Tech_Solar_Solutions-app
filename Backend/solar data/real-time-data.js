@@ -29,7 +29,7 @@ const authenticate = (req, res, next) => {
 };
 
 // Route to fetch real-time data
-router.get('/realtime-data', authenticate, async (req, res) => {
+router.get('/realtime-data', async (req, res) => {
   try {
     const { deviceSN } = req.query;
 
