@@ -1,6 +1,2 @@
-const crypto = require('crypto');
-
-// Generate a random 32-byte secret key
-const JWT_SECRET = crypto.randomBytes(32).toString('hex');
-
+const JWT_SECRET = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OTEyMDA3OTE1OThkYTJkNjU5Y2IyMiIsImVtYWlsIjoiemVlc2hhbnNpZGRpcXVpOTc5MEBnbWFpbC5jb20iLCJuYW1lIjoiWmVlc2hhbiIsImlhdCI6MTczNzg4MDQ3NX0.StW30wRLmtSYddot4tMcfqZr9kWmDZ2yI94SAxecH48'; // Replace with a strong, unique secret
 module.exports = { JWT_SECRET };
