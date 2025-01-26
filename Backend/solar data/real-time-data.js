@@ -55,7 +55,8 @@ router.get('/realtime-data', authenticate, async (req, res) => {
     }
 
     const { tokenId, sn } = device; // Extract tokenId and serial number
-    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${encodeURIComponent(tokenId)}&sn=${encodeURIComponent(sn)}`;
+    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=202411162123206210779110&sn=SN9XRUFD4K`;
+
      // Encode tokenId and sn for safe URL usage
 
     // Log Solax API request details
@@ -64,7 +65,7 @@ router.get('/realtime-data', authenticate, async (req, res) => {
     // Step 5: Make GET request to Solax API
     const response = await axios.get(url, {
       headers: {
-        'Authorization': `Bearer ${20241021031609566986342}`,
+        
         'Content-Type': 'application/json',
         'Accept': '*/*',
         'User-Agent': 'PostmanRuntime/7.29.2',
