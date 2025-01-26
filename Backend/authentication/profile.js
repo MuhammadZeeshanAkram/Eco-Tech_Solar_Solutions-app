@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config'); // Import shared secret
 const User = require('../models/User');
 
-// Middleware for authenticating the token
+// Middleware for authenticating JWT
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -14,8 +14,8 @@ const authenticate = (req, res, next) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET); // Verify the token
-    req.user = decoded; // Attach decoded token to request
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
     next();
   } catch (error) {
     console.error('Token Verification Error:', error.message);
@@ -26,24 +26,20 @@ const authenticate = (req, res, next) => {
 // Route to fetch user information
 router.get('/user-info', authenticate, async (req, res) => {
   try {
-    // `req.user` is set by the `authenticate` middleware
-    const userId = req.user.id;
-
-    // Find the user in the database
-    const user = await User.findById(userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Respond with user data
     res.status(200).json({
+      success: true,
       name: user.name,
       email: user.email,
-      devices: user.devices || [], // Default to empty array if no devices
+      devices: user.devices || [],
     });
-  } catch (err) {
-    console.error('Error fetching user info:', err.message);
-    res.status(500).json({ message: 'Internal Server Error' });
+  } catch (error) {
+    console.error('Error fetching user info:', error.message);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 });
 
