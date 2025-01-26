@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../config'); // Import shared secret
 const User = require('../models/User');
+
+require('dotenv').config(); // Load .env variables
+const JWT_SECRET = process.env.JWT_SECRET; // Load JWT_SECRET
 
 // Login Route
 router.post('/login', async (req, res) => {
@@ -28,7 +30,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user._id, email: user.email, name: user.name },
-      JWT_SECRET // Shared secret
+      JWT_SECRET // Use JWT_SECRET from .env
     );
 
     res.status(200).json({
@@ -42,15 +44,4 @@ router.post('/login', async (req, res) => {
   }
 });
 
-
-
-router.post('/logout', (req, res) => {
-  try {
-    // Placeholder for token invalidation logic (if needed)
-    res.status(200).json({ message: 'Logout successful' });
-  } catch (error) {
-    console.error('Error during logout:', error);
-    res.status(500).json({ message: 'Logout failed' });
-  }
-});
 module.exports = router;

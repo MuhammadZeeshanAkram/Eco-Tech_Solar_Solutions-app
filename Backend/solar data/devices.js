@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../config'); // Import shared secret
 
-// Middleware for authenticating JWT
+require('dotenv').config(); // Load .env variables
+const JWT_SECRET = process.env.JWT_SECRET; // Load JWT_SECRET
+
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -14,8 +15,8 @@ const authenticate = (req, res, next) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    const decoded = jwt.verify(token, JWT_SECRET); // Verify the token
+    req.user = decoded; // Attach decoded token to request
     next();
   } catch (error) {
     console.error('Token Verification Error:', error.message);
@@ -23,18 +24,17 @@ const authenticate = (req, res, next) => {
   }
 };
 
-// Route to fetch user devices
 router.get('/user-devices', authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     res.status(200).json({ success: true, devices: user.devices });
   } catch (error) {
-    console.error('Error fetching devices:', error.message);
-    res.status(500).json({ success: false, message: 'Internal Server Error' });
+    console.error('Error fetching devices:', error);
+    res.status(500).json({ message: 'Failed to fetch devices' });
   }
 });
 
