@@ -21,7 +21,7 @@ router.post('/login', async (req, res) => {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid email/name or password' });
+      return res.status(401).json({ message: 'Invalid email/name or pswd' });
     }
 
     // Respond with the static token from .env
