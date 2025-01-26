@@ -50,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen>
       return;
     }
 
-    final url = Uri.parse('https://eco-tech-solar-solutions-app.onrender.com/api/auth/login');
+    final url = Uri.parse('https://eco-tech-solar-solutions-app-2.onrender.com/api/auth/login');
     try {
       print('Login Data: {loginType: $field, password: $password}'); // Debugging log
 

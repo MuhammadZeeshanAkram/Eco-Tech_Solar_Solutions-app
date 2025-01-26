@@ -33,7 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Fetch user's name from the backend
   Future<void> _fetchUserName() async {
-    const url = 'https://eco-tech-solar-solutions-app.onrender.com/api/auth/user-info';
+    const url =
+        'https://eco-tech-solar-solutions-app-2.onrender.com/api/auth/user-info';
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('jwt_token'); // Retrieve stored token
@@ -53,7 +54,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _userName = data['name']; // Assign user's name
         });
       } else {
-        throw Exception('Failed to fetch user info. Status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to fetch user info. Status code: ${response.statusCode}');
       }
     } catch (error) {
       print('Error fetching user info: $error');
@@ -62,7 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Fetch devices from the backend
   Future<void> _fetchDevices() async {
-    const url = 'https://eco-tech-solar-solutions-app.onrender.com/api/auth/user-devices';
+    const url =
+        'https://eco-tech-solar-solutions-app-2.onrender.com/api/auth/user-devices';
     setState(() => _isLoading = true);
 
     try {
@@ -89,7 +92,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoading = false;
         });
       } else {
-        throw Exception('Failed to fetch devices. Status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to fetch devices. Status code: ${response.statusCode}');
       }
     } catch (error) {
       print('Error fetching devices: $error');
@@ -99,7 +103,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Fetch real-time data for the selected device
   Future<void> _fetchDeviceData(String sn) async {
-    const url = 'https://eco-tech-solar-solutions-app.onrender.com/api/solar/realtime-data';
+    const url =
+        'https://eco-tech-solar-solutions-app-2.onrender.com/api/solar/realtime-data';
     setState(() => _isLoading = true);
 
     try {
@@ -112,19 +117,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
       final response = await http.get(
         Uri.parse('$url?deviceSN=$sn'),
-        headers: {'Authorization': 'Bearer $token','Content-Type': 'application/json',},
-        
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'User-Agent': 'PostmanRuntime/7.43.0',
+          'Accept': '*/*',
+        },
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
           _deviceData = data['data'];
-          _graphData = _generateGraphData(); // Generate graph data based on the device data
+          _graphData =
+              _generateGraphData(); // Generate graph data based on the device data
           _isLoading = false;
         });
       } else {
-        throw Exception('Failed to fetch device data. Status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to fetch device data. Status code: ${response.statusCode}');
       }
     } catch (error) {
       print('Error fetching device data: $error');
@@ -141,7 +152,9 @@ class _HomeScreenState extends State<HomeScreen> {
       24,
       (index) => {
         'hour': index,
-        'energy': (_deviceData!['acpower'] ?? 0) * (index % 5 + 1) / 10.0, // Example calculation
+        'energy': (_deviceData!['acpower'] ?? 0) *
+            (index % 5 + 1) /
+            10.0, // Example calculation
       },
     );
   }
@@ -162,7 +175,8 @@ class _HomeScreenState extends State<HomeScreen> {
               : _deviceData != null
                   ? GridView.builder(
                       padding: const EdgeInsets.all(12),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2, // Two items per row
                         crossAxisSpacing: 12, // Spacing between columns
                         mainAxisSpacing: 12, // Spacing between rows
@@ -243,7 +257,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   value: device['sn'],
                   child: Text(
                     device['sn'],
-                    style: const TextStyle(color: Color.fromARGB(255, 245, 245, 245), fontSize: 14),
+                    style: const TextStyle(
+                        color: Color.fromARGB(255, 245, 245, 245),
+                        fontSize: 14),
                   ),
                 );
               }).toList(),
@@ -261,7 +277,11 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color.fromARGB(255, 125, 173, 241), Color.fromARGB(255, 34, 59, 170), Colors.green],
+            colors: [
+              Color.fromARGB(255, 125, 173, 241),
+              Color.fromARGB(255, 34, 59, 170),
+              Colors.green
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -301,7 +321,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () async {
           final prefs = await SharedPreferences.getInstance();
           await prefs.remove('jwt_token'); // Remove JWT token
-          Navigator.pushReplacementNamed(context, '/login'); // Navigate to login screen
+          Navigator.pushReplacementNamed(
+              context, '/login'); // Navigate to login screen
         },
         backgroundColor: const Color.fromARGB(255, 22, 69, 163),
         child: const Icon(Icons.logout),

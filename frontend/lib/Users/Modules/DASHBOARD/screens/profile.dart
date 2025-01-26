@@ -22,7 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Fetch user info from the backend
   Future<void> _fetchUserInfo() async {
-    const String url = 'https://eco-tech-solar-solutions-app.onrender.com/api/auth/user-info';
+    const String url = 'https://eco-tech-solar-solutions-app-2.onrender.com/api/auth/user-info';
 
     try {
       final prefs = await SharedPreferences.getInstance();
