@@ -2,12 +2,14 @@ const express = require('express');
 const router = express.Router();
 const cors = require('cors');
 const axios = require('axios');
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config'); // Import shared secret
 
-require('dotenv').config(); // Load .env variables
-const JWT_SECRET = process.env.JWT_SECRET; // Load JWT_SECRET
+// Apply CORS to this route
+router.use(cors());
 
+// Middleware for authenticating JWT
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -17,8 +19,8 @@ const authenticate = (req, res, next) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET); // Verify the token
-    req.user = decoded; // Attach decoded token to request
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
     next();
   } catch (error) {
     console.error('Token Verification Error:', error.message);
@@ -26,9 +28,11 @@ const authenticate = (req, res, next) => {
   }
 };
 
+// Route to fetch real-time data
 router.get('/realtime-data', authenticate, async (req, res) => {
   try {
     const { deviceSN } = req.query;
+
     if (!deviceSN) {
       return res.status(400).json({ success: false, message: 'Device SN is required' });
     }
@@ -44,32 +48,21 @@ router.get('/realtime-data', authenticate, async (req, res) => {
     }
 
     const { tokenId, sn } = device;
-    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${encodeURIComponent(
-      tokenId
-    )}&sn=${encodeURIComponent(sn)}`;
+    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${encodeURIComponent(tokenId)}&sn=${encodeURIComponent(sn)}`;
 
     const response = await axios.get(url, {
-      headers: { 'Content-Type': 'application/json', Accept: '*/*' },
+      headers: { 'Content-Type': 'application/json', 'User-Agent': 'PostmanRuntime/7.29.2' },
       timeout: 15000,
     });
 
     if (response.status === 200 && response.data.success) {
-      return res.status(200).json({
-        success: true,
-        message: 'Real-time data fetched successfully',
-        deviceSN: sn,
-        data: response.data.result,
-      });
+      res.status(200).json({ success: true, message: 'Data fetched successfully', data: response.data.result });
     } else {
-      return res.status(400).json({
-        success: false,
-        message: response.data.exception || 'Failed to fetch real-time data',
-        details: response.data,
-      });
+      res.status(400).json({ success: false, message: response.data.exception || 'Failed to fetch data' });
     }
   } catch (error) {
-    console.error('Error connecting to Solax API:', error.response?.data || error.message || error.stack);
-    res.status(500).json({ success: false, message: 'Internal server error occurred', error: error.message });
+    console.error('Error:', error.message);
+    res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
   }
 });
 
