@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const cors = require('cors'); // Import cors
 const axios = require('axios');
-const User = require('../models/User');
+const User = require('../models/');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config'); // Import shared secret
 
