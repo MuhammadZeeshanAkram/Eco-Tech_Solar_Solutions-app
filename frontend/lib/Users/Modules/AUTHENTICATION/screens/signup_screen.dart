@@ -56,7 +56,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         };
       }).toList();
 
-      final url = Uri.parse('https://eco-tech-solar-solutions-app-2.onrender.com/api/auth/signup');
+      final url = Uri.parse('https://eco-tech-solar-solutions-app.onrender.com/api/auth/signup');
 
       try {
         final response = await http.post(

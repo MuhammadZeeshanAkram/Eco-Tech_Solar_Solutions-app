@@ -34,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Fetch user's name from the backend
   Future<void> _fetchUserName() async {
     const url =
-        'https://eco-tech-solar-solutions-app-2.onrender.com/api/auth/user-info';
+        'https://eco-tech-solar-solutions-app.onrender.com/api/auth/user-info';
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('jwt_token'); // Retrieve stored token
@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Fetch devices from the backend
   Future<void> _fetchDevices() async {
     const url =
-        'https://eco-tech-solar-solutions-app-2.onrender.com/api/auth/user-devices';
+        'https://eco-tech-solar-solutions-app.onrender.com/api/auth/user-devices';
     setState(() => _isLoading = true);
 
     try {
@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Fetch real-time data for the selected device
   Future<void> _fetchDeviceData(String sn) async {
     const url =
-        'https://eco-tech-solar-solutions-app-2.onrender.com/api/solar/realtime-data';
+        'https://eco-tech-solar-solutions-app.onrender.com/api/solar/realtime-data';
     setState(() => _isLoading = true);
 
     try {
