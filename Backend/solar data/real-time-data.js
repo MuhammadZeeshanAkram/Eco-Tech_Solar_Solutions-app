@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const cors = require('cors'); // Import cors
 const axios = require('axios');
-const User = require('../models/User');
+
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config'); // Import shared secret
 // Import authenticate middleware
@@ -55,8 +55,7 @@ router.get('/realtime-data', authenticate, async (req, res) => {
     }
 
     const { tokenId, sn } = device; // Extract tokenId and serial number
-    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=202411162123206210779110&sn=SN9XRUFD4K`;
-
+    const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${encodeURIComponent(tokenId)}&sn=${encodeURIComponent(sn)}`;
      // Encode tokenId and sn for safe URL usage
 
     // Log Solax API request details
@@ -70,7 +69,7 @@ router.get('/realtime-data', authenticate, async (req, res) => {
         'Accept': '*/*',
         'User-Agent': 'PostmanRuntime/7.29.2',
       },
-      timeout: 15000, // Set timeout to 15 seconds // Set timeout to 15 seconds
+      // Set timeout to 15 seconds // Set timeout to 15 seconds
     });
 
     // Step 6: Handle Solax API response
