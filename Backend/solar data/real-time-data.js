@@ -5,9 +5,11 @@ const axios = require('axios');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config'); // Import shared secret
-// Import authenticate middleware
 
 // Apply CORS to this route
+router.use(cors());
+
+// Middleware to authenticate requests
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -18,7 +20,8 @@ const authenticate = (req, res, next) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET); // Verify the token
-    req.User = decoded; // Attach decoded token to request
+    console.log('Decoded token:', decoded); // Log the decoded token
+    req.user = decoded; // Attach decoded token to request
     next();
   } catch (error) {
     console.error('Token Verification Error:', error.message);
@@ -26,6 +29,7 @@ const authenticate = (req, res, next) => {
   }
 };
 
+// Route to fetch real-time data
 router.get('/realtime-data', authenticate, async (req, res) => {
   try {
     // Step 1: Extract deviceSN from the request query
@@ -40,23 +44,27 @@ router.get('/realtime-data', authenticate, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Device SN is required' });
     }
 
-    // Step 3: Authenticate User and fetch User data
-    const User = await User.findById(req.User.id);
-    if (!User) {
-      console.error('Authenticated User not found');
+    // Step 3: Authenticate user and fetch user data
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.error('Authenticated user not found in database for ID:', req.user.id);
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Step 4: Validate if device belongs to User
-    const device = User.devices.find((d) => d.sn === deviceSN);
+    console.log('Authenticated user:', user);
+
+    // Step 4: Validate if device belongs to user
+    const device = user.devices.find((d) => d.sn === deviceSN);
     if (!device) {
-      console.error(`Device with SN ${deviceSN} not found for User ${req.User.id}`);
-      return res.status(404).json({ success: false, message: 'Device not found for this User' });
+      console.error(`Device with SN ${deviceSN} not found for user ${req.user.id}`);
+      return res.status(404).json({ success: false, message: 'Device not found for this user' });
     }
+
+    console.log('Device found for user:', device);
 
     const { tokenId, sn } = device; // Extract tokenId and serial number
     const url = `https://www.solaxcloud.com:9443/proxy/api/getRealtimeInfo.do?tokenId=${encodeURIComponent(tokenId)}&sn=${encodeURIComponent(sn)}`;
-     // Encode tokenId and sn for safe URL usage
+    // Encode tokenId and sn for safe URL usage
 
     // Log Solax API request details
     console.log('Requesting Solax API with URL:', url);
@@ -64,12 +72,10 @@ router.get('/realtime-data', authenticate, async (req, res) => {
     // Step 5: Make GET request to Solax API
     const response = await axios.get(url, {
       headers: {
-        
         'Content-Type': 'application/json',
         'Accept': '*/*',
         'User-Agent': 'PostmanRuntime/7.29.2',
       },
-      // Set timeout to 15 seconds // Set timeout to 15 seconds
     });
 
     // Step 6: Handle Solax API response
