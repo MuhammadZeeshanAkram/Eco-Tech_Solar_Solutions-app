@@ -23,7 +23,7 @@ class _ForgotScreenState extends State<ForgotScreen> {
       return;
     }
 
-    final url = Uri.parse('http://192.168.18.164:5000/api/auth/forgot-password'); // Replace with your backend IP
+    final url = Uri.parse('http://13.60.17.246:3000/api/auth/forgot-password'); // Replace with your backend IP
 
     try {
       final response = await http.post(

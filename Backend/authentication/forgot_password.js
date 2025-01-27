@@ -41,7 +41,7 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     // Generate a password reset link
-    const resetLink = `http://192.168.18.164:5000/api/auth/reset-password?email=${email}`;
+    const resetLink = `http://13.60.17.246:3000/api/auth/reset-password?email=${email}`;
 
     // Email content
     const mailOptions = {
