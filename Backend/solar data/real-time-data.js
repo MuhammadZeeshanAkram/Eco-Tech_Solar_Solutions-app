@@ -18,7 +18,7 @@ const authenticate = (req, res, next) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET); // Verify the token
-    req.user = decoded; // Attach decoded token to request
+    req.User = decoded; // Attach decoded token to request
     next();
   } catch (error) {
     console.error('Token Verification Error:', error.message);
@@ -40,18 +40,18 @@ router.get('/realtime-data', authenticate, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Device SN is required' });
     }
 
-    // Step 3: Authenticate user and fetch user data
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      console.error('Authenticated user not found');
+    // Step 3: Authenticate User and fetch User data
+    const User = await User.findById(req.User.id);
+    if (!User) {
+      console.error('Authenticated User not found');
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Step 4: Validate if device belongs to user
-    const device = user.devices.find((d) => d.sn === deviceSN);
+    // Step 4: Validate if device belongs to User
+    const device = User.devices.find((d) => d.sn === deviceSN);
     if (!device) {
-      console.error(`Device with SN ${deviceSN} not found for user ${req.user.id}`);
-      return res.status(404).json({ success: false, message: 'Device not found for this user' });
+      console.error(`Device with SN ${deviceSN} not found for User ${req.User.id}`);
+      return res.status(404).json({ success: false, message: 'Device not found for this User' });
     }
 
     const { tokenId, sn } = device; // Extract tokenId and serial number
