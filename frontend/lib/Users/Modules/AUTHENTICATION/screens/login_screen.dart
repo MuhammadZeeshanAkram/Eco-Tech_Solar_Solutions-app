@@ -50,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen>
       return;
     }
 
-    final url = Uri.parse('https://13.60.17.246:9443//api/auth/login');
+    final url = Uri.parse('http://13.60.17.246:3000/api/auth/login');
     try {
       print('Login Data: {loginType: $field, password: $password}'); // Debugging log
 

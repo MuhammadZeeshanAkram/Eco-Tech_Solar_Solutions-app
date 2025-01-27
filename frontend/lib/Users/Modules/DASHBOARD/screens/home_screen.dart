@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Fetch real-time data for the selected device
   Future<void> _fetchDeviceData(String sn) async {
     const url =
-        'https://eco-tech-solar-solutions-app.onrender.com/api/solar/realtime-data';
+        'http://13.60.17.246:3000/api/solar/realtime-data';
     setState(() => _isLoading = true);
 
     try {
